@@ -16,29 +16,45 @@
  * @param stClass $submission
  */
 function webform_create_user_webform_submission_insert($node, $submission) {
-  if (property_exists($node, 'uuid') && $node->uuid === 'd947d1c4-4461-4434-991e-2eda824d707d') {
-    _webform_create_user_createAccount($node, $submission);
+  $config = array();
+  if (property_exists($node, 'uuid')) {
+    $config = _webform_create_user_fetchConfig($node->uuid, 'uuid');
+  }
+
+  if (empty($config) && property_exists($node, 'nid')) {
+    $config = _webform_create_user_fetchConfig($node->nid);
+  }
+
+  if (array_key_exists('email', $config)) {
+    _webform_create_user_createAccount($node, $submission, $config['email']);
   }
 }
 
 /**
- * Creates a Drupal user for the admin contact, if one doesn't already exist.
+ * Creates a Drupal user using the value pointed to by the email_form_key.
  *
- * @param stdClass $node The webform from which the submission was made
- * @param stdClass $submission The webform submission
+ * No action is taken if the user already exists.
+ *
+ * @param stdClass $node
+ *   The webform from which the submission was made
+ * @param stdClass $submission
+ *   The webform submission
+ * @param string $email_form_key
+ *   The form_key that identifies the email address to use to create the Drupal
+ *   user.
  */
-function _webform_create_user_createAccount(stdClass $node, stdClass $submission) {
-  $componentID = _webform_create_user_getWebformComponentID('civicrm_2_contact_1_email_email', $node);
+function _webform_create_user_createAccount(stdClass $node, stdClass $submission, $email_form_key) {
+  $componentID = _webform_create_user_getWebformComponentID($email_form_key, $node);
 
   if ($componentID !== FALSE) {
-    $adminEmail = $submission->data[$componentID][0];
+    $email = $submission->data[$componentID][0];
 
     // make sure a Drupal account with this email address doesn't already exist
-    if (user_load_by_mail($adminEmail) === FALSE) {
+    if (user_load_by_mail($email) === FALSE) {
       $params = array(
-        'init' => $adminEmail,
-        'name' => $adminEmail,
-        'mail' => $adminEmail,
+        'init' => $email,
+        'name' => $email,
+        'mail' => $email,
         'pass' => md5(uniqid(rand(), true)),
         'status' => 1,
       );
@@ -75,8 +91,7 @@ function _webform_create_user_getWebformComponentID($form_key, stdClass $node) {
  *   for example, this would be the node ID.
  * @param string $identifier_type
  *   The identifier by which to look up which webform component component should
- *   be used to create the Drupal user. Defaults to 'node.' @todo add support
- *   for UUID
+ *   be used to create the Drupal user. Defaults to 'node.'
  * @return array
  *   The components which will be used to create the Drupal user. At this point,
  *   the array will have only one key 'email,' which will be used for both the
@@ -114,8 +129,7 @@ function _webform_create_user_fetchConfig($identifier, $identifier_type = 'node'
  *   for example, this would be the node ID.
  * @param string $identifier_type
  *   The identifier by which to look up which webform component component should
- *   be used to create the Drupal user. Defaults to 'node.' @todo add support
- *   for UUID
+ *   be used to create the Drupal user. Defaults to 'node.'
  * @return array
  *   The components which will be used to create the Drupal user. At this point,
  *   the array will have only one key 'email,' which will be used for both the
