@@ -65,3 +65,81 @@ function _webform_create_user_getWebformComponentID($form_key, stdClass $node) {
   }
   return $result;
 }
+
+/**
+ * Fetches the config for a webform (i.e., which webform components should we
+ * use to create the Drupal user?)
+ *
+ * @param string $identifier
+ *   The unique ID that identifies the webform. If identifier type is 'node,'
+ *   for example, this would be the node ID.
+ * @param string $identifier_type
+ *   The identifier by which to look up which webform component component should
+ *   be used to create the Drupal user. Defaults to 'node.' @todo add support
+ *   for UUID
+ * @return array
+ *   The components which will be used to create the Drupal user. At this point,
+ *   the array will have only one key 'email,' which will be used for both the
+ *   email and the user name.
+ */
+function _webform_create_user_fetchConfig($identifier, $identifier_type = 'node') {
+  $all_configs = variable_get('webform_create_user', FALSE);
+  $results = array();
+
+  if ($all_configs === FALSE) {
+    return $results;
+  }
+
+  foreach ($all_configs as $data) {
+    if ($data['id_type'] === $identifier_type && $data['id'] === $identifier) {
+      $results = $data['components'];
+      break;
+    }
+  }
+
+  return $results;
+}
+
+/**
+ * Stores the config for a webform (i.e., which webform components should we
+ * use to create the Drupal user?)
+ *
+ * @param array $components
+ *   The form_keys for the components of the webform that should be used to
+ *   create a Drupal user, keyed by the component's role
+ *   (e.g.: 'email' => 'civicrm_2_contact_1_email_email'). Presently only the
+ *   key 'email' is supported.
+ * @param string $identifier
+ *   The unique ID that identifies the webform. If identifier type is 'node,'
+ *   for example, this would be the node ID.
+ * @param string $identifier_type
+ *   The identifier by which to look up which webform component component should
+ *   be used to create the Drupal user. Defaults to 'node.' @todo add support
+ *   for UUID
+ * @return array
+ *   The components which will be used to create the Drupal user. At this point,
+ *   the array will have only one key 'email,' which will be used for both the
+ *   email and the user name.
+ */
+function _webform_create_user_saveConfig(array $components, $identifier, $identifier_type = 'node') {
+  // rekey the array for simplicity; the keys don't mean anything anyway
+  $all_configs = array_values(variable_get('webform_create_user', array()));
+
+  // Determine where in the array to save new values. For updates, replace
+  // existing data; for inserts, append to the array.
+  $save_key = count($all_configs);
+  foreach ($all_configs as $key => $data) {
+    if ($data['id_type'] === $identifier_type && $data['id'] === $identifier) {
+      $save_key = $key;
+      break;
+    }
+  }
+
+  $all_configs[$save_key] = array(
+    'id' => $identifier,
+    'id_type' => $identifier_type,
+    'components' => $components,
+  );
+
+  variable_set($all_configs);
+}
