@@ -111,7 +111,7 @@ function _webform_create_user_fetchConfig($identifier, $identifier_type = 'node'
   }
 
   foreach ($all_configs as $data) {
-    if ($data['id_type'] === $identifier_type && $data['id'] === $identifier) {
+    if ($data['id_type'] == $identifier_type && $data['id'] == $identifier) {
       $results = $data['components'];
       break;
     }
@@ -160,5 +160,5 @@ function _webform_create_user_saveConfig(array $components, $identifier, $identi
     'components' => $components,
   );
 
-  variable_set($all_configs);
+  variable_set('webform_create_user', $all_configs);
 }
