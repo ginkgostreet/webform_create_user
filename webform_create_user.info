@@ -1,0 +1,8 @@
+; $Id: $
+name = Webform Create User
+description = Provides a way to create a Drupal user upon submission of specified webforms, using specified components as the basis for the user account.
+core = 7.x
+package = Webform
+; configure =
+php = 5.3
+dependencies[] = webform

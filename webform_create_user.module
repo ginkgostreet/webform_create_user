@@ -1,0 +1,67 @@
+<?php
+/**
+ * This module provides a way to create a Drupal user upon submission of
+ * specified webforms, using specified components as the basis for the user
+ * account.
+ *
+ * @author Frank J. Gómez <frank@ginkgostreet.com>
+ */
+
+/**
+ * Implementation of hook_webform_submission_insert.
+ *
+ * @see http://drupalcontrib.org/api/drupal/contributions%21webform%21webform.api.php/function/hook_webform_submission_insert/7
+ *
+ * @param stdClass $node
+ * @param stClass $submission
+ */
+function webform_create_user_webform_submission_insert($node, $submission) {
+  if (property_exists($node, 'uuid') && $node->uuid === 'd947d1c4-4461-4434-991e-2eda824d707d') {
+    _webform_create_user_createAccount($node, $submission);
+  }
+}
+
+/**
+ * Creates a Drupal user for the admin contact, if one doesn't already exist.
+ *
+ * @param stdClass $node The webform from which the submission was made
+ * @param stdClass $submission The webform submission
+ */
+function _webform_create_user_createAccount(stdClass $node, stdClass $submission) {
+  $componentID = _webform_create_user_getWebformComponentID('civicrm_2_contact_1_email_email', $node);
+
+  if ($componentID !== FALSE) {
+    $adminEmail = $submission->data[$componentID][0];
+
+    // make sure a Drupal account with this email address doesn't already exist
+    if (user_load_by_mail($adminEmail) === FALSE) {
+      $params = array(
+        'init' => $adminEmail,
+        'name' => $adminEmail,
+        'mail' => $adminEmail,
+        'pass' => md5(uniqid(rand(), true)),
+        'status' => 1,
+      );
+      user_save(NULL, $params);
+    }
+  }
+}
+
+/**
+ * @param string $form_key
+ * @param stdClass $node The webform
+ * @return mixed Int component ID, or boolean FALSE if not found or if node is not a webform
+ */
+function _webform_create_user_getWebformComponentID($form_key, stdClass $node) {
+  $result = FALSE;
+
+  if (property_exists($node, 'webform')) {
+    foreach ($node->webform['components'] as $componentID => $data) {
+      if ($data['form_key'] === $form_key) {
+        $result = $componentID;
+        break;
+      }
+    }
+  }
+  return $result;
+}
