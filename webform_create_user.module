@@ -58,7 +58,12 @@ function _webform_create_user_createAccount(stdClass $node, stdClass $submission
         'pass' => md5(uniqid(rand(), true)),
         'status' => 1,
       );
-      user_save(NULL, $params);
+      $drupalUser = user_save(NULL, $params);
+
+      if ($drupalUser){
+        $operation = 'register_no_approval_required';
+        _user_mail_notify($operation, $drupalUser);
+      }
     }
   }
 }
