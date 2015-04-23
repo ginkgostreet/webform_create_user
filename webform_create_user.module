@@ -8,14 +8,14 @@
  */
 
 /**
- * Implementation of hook_webform_submission_insert.
+ * Implementation of hook_webform_submission_presave.
  *
- * @see http://drupalcontrib.org/api/drupal/contributions%21webform%21webform.api.php/function/hook_webform_submission_insert/7
+ * @see http://www.drupalcontrib.org/api/drupal/contributions%21webform%21webform.api.php/function/hook_webform_submission_presave/7
  *
  * @param stdClass $node
  * @param stClass $submission
  */
-function webform_create_user_webform_submission_insert($node, $submission) {
+function webform_create_user_webform_submission_presave($node, &$submission) {
   $config = array();
   if (property_exists($node, 'uuid')) {
     $config = _webform_create_user_fetchConfig($node->uuid, 'uuid');
@@ -26,7 +26,12 @@ function webform_create_user_webform_submission_insert($node, $submission) {
   }
 
   if (array_key_exists('email', $config)) {
-    _webform_create_user_createAccount($node, $submission, $config['email']);
+    $drupalUser = _webform_create_user_createAccount($node, $submission, $config['email']);
+
+    // make the submission owned by the newly created user
+    if ($drupalUser) {
+      $submission->uid = $drupalUser->uid;
+    }
   }
 }
 
@@ -42,8 +47,11 @@ function webform_create_user_webform_submission_insert($node, $submission) {
  * @param string $email_form_key
  *   The form_key that identifies the email address to use to create the Drupal
  *   user.
+ * @return mixed Drupal user object on success, else boolean FALSE
  */
 function _webform_create_user_createAccount(stdClass $node, stdClass $submission, $email_form_key) {
+  $drupalUser = FALSE;
+
   $componentID = _webform_create_user_getWebformComponentID($email_form_key, $node);
 
   if ($componentID !== FALSE) {
@@ -66,6 +74,8 @@ function _webform_create_user_createAccount(stdClass $node, stdClass $submission
       }
     }
   }
+
+  return $drupalUser;
 }
 
 /**
