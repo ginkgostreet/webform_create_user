@@ -1,5 +1,18 @@
 <?php
 
-function webform_create_user_uninstall() {
+
+/** 
+ * Register webforms and webform components(fields) to create users.
+ **/
+function webform_create_user_enable() {
+/* 
+# Sample activation of a webform:
+  $field = array('email' => 'civicrm_1_contact_1_email_email');
+  $id = '7';
+  _webform_create_user_saveConfig($field, $id, 'node');
+*/
+}
+
+function webform_create_user_disable() {
   variable_del('webform_create_user');
 }
