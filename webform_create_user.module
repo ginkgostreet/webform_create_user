@@ -28,10 +28,10 @@ function webform_create_user_webform_submission_presave($node, &$submission) {
   if (array_key_exists('email', $config)) {
     $drupalUser = _webform_create_user_createAccount($node, $submission, $config['email']);
 
-    // make the submission owned by the newly created user
+  /*  // make the submission owned by the newly created user
     if ($drupalUser) {
       $submission->uid = $drupalUser->uid;
-    }
+    }*/
   }
 }
 
